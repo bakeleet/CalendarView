@@ -14,20 +14,31 @@ public final class CalendarViewModel: ObservableObject {
         CalendarDayModel(date: Date(), isSelected: true)
     ]
     @Published private(set) var month = ""
+    
+    public weak var delegate: CalendarObserving? {
+        didSet {
+            guard let today = days.last else { return }
+            delegate?.didAutoSelectInitialDay(today.date)
+        }
+    }
 
     private var selectedDayIndex = 0
     private var visibleDays: Set<CalendarDayModel> = []
+    private var didSetHeightOnFirstLoad = false
 
     private let monthFormatter: DateFormatter = {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMMM"
         return dateFormatter
     }()
+    
+    public init() {}
 
     func dayAppeared(_ day: CalendarDayModel) {
         loadMoreDaysIfNecessary(for: day)
         visibleDays.insert(day)
         setMonthText()
+        delegate?.dayDidAppear(for: day.date)
     }
 
     func dayDisappeared(_ day: CalendarDayModel) {
@@ -43,6 +54,17 @@ public final class CalendarViewModel: ObservableObject {
             withAnimation {
                 updateSelection(index)
             }
+        }
+        delegate?.didTapDay(for: days[index].date)
+    }
+
+    func setHeight(_ height: CGFloat) {
+        guard didSetHeightOnFirstLoad == false else {
+            return
+        }
+        didSetHeightOnFirstLoad = true
+        DispatchQueue.main.async {
+            self.delegate?.didSetInitialHeight(height)
         }
     }
 

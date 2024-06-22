@@ -15,13 +15,15 @@ public struct CalendarView: View {
         static let defaultSpacing = 4.0
     }
 
-    @ObservedObject var viewModel = CalendarViewModel()
+    @ObservedObject var viewModel: CalendarViewModel
     
-    public init() {}
+    public init(viewModel: CalendarViewModel) {
+        self.viewModel = viewModel
+    }
 
     public var body: some View {
         GeometryReader { proxy in
-            VStack(spacing: 8.0) {
+            VStack {
                 Text(viewModel.month)
                     .font(.headline)
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -67,6 +69,8 @@ public struct CalendarView: View {
     // MARK: - Private
 
     private func size(from screenWidth: CGFloat) -> CGFloat {
-        return (screenWidth - (7 * ViewConstants.defaultSpacing)) / ViewConstants.numberOfElements
+        let size = (screenWidth - (7 * ViewConstants.defaultSpacing)) / ViewConstants.numberOfElements
+        viewModel.setHeight(size + 40)
+        return size
     }
 }
