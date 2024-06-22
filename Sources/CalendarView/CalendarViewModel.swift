@@ -13,13 +13,26 @@ public final class CalendarViewModel: ObservableObject {
     @Published private(set) var days = [
         CalendarDayModel(date: Date(), isSelected: true)
     ]
+    @Published private(set) var month = ""
 
     private var selectedDayIndex = 0
+    private var visibleDays: Set<CalendarDayModel> = []
 
-    func loadMoreDaysIfNecessary(for dayModel: CalendarDayModel) {
-        guard dayModel == days.last else { return }
+    private let monthFormatter: DateFormatter = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMMM"
+        return dateFormatter
+    }()
 
-        loadMoreDates()
+    func dayAppeared(_ day: CalendarDayModel) {
+        loadMoreDaysIfNecessary(for: day)
+        visibleDays.insert(day)
+        setMonthText()
+    }
+
+    func dayDisappeared(_ day: CalendarDayModel) {
+        visibleDays.remove(day)
+        setMonthText()
     }
 
     func didTapOnDay(at index: Int) {
@@ -55,12 +68,6 @@ public final class CalendarViewModel: ObservableObject {
 
     // MARK: - Private
 
-    private func updateSelection(_ index: Int) {
-        days[selectedDayIndex].isSelected.toggle()
-        days[index].isSelected.toggle()
-        selectedDayIndex = index
-    }
-
     private func loadMoreDaysIfNecessary(for dayModel: CalendarDayModel) {
         guard dayModel == days.last else { return }
 
@@ -73,6 +80,45 @@ public final class CalendarViewModel: ObservableObject {
             guard let date = Calendar.current.date(byAdding: .day, value: -i, to: startDate) else { return }
             let dateModel = CalendarDayModel(date: date)
             days.append(dateModel)
+        }
+    }
+
+    private func updateSelection(_ index: Int) {
+        days[selectedDayIndex].isSelected.toggle()
+        days[index].isSelected.toggle()
+        selectedDayIndex = index
+    }
+
+    private func setMonthText() {
+        guard visibleDays.count == 7 else {
+            return
+        }
+
+        var monthNumberForVisibleDays = [Int]()
+        visibleDays.forEach {
+            monthNumberForVisibleDays.append(Calendar.current.component(.month, from: $0.date))
+        }
+        updateMonthText(for: monthNumberForVisibleDays)
+    }
+
+    private func updateMonthText(for days: [Int]) {
+        var dictionaryToCount = [Int: Int]()
+        days.forEach {
+            dictionaryToCount[$0, default: 0] += 1
+        }
+
+        var maxCount = 0
+        var mostFrequentElement: Int?
+
+        for (element, count) in dictionaryToCount {
+            if count > maxCount {
+                maxCount = count
+                mostFrequentElement = element
+            }
+        }
+
+        if let mostFrequentElement = mostFrequentElement {
+            month = monthFormatter.monthSymbols[mostFrequentElement - 1]
         }
     }
 }
