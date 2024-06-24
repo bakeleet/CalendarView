@@ -10,11 +10,6 @@ import SwiftUI
 
 public struct CalendarView: View {
 
-    private enum ViewConstants {
-        static let numberOfElements = 7.0
-        static let defaultSpacing = 4.0
-    }
-
     @ObservedObject var viewModel: CalendarViewModel
     
     public init(viewModel: CalendarViewModel) {
@@ -27,9 +22,9 @@ public struct CalendarView: View {
                 Text(viewModel.month)
                     .font(.headline)
                 ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: ViewConstants.defaultSpacing) {
+                    LazyHStack(spacing: CalendarViewModel.ViewConstants.defaultSpacing) {
                         ForEach(Array(viewModel.days.enumerated()), id: \.element) { index, day in
-                            VStack(alignment: .center, spacing: ViewConstants.defaultSpacing) {
+                            VStack(alignment: .center, spacing: CalendarViewModel.ViewConstants.defaultSpacing) {
                                 Text(day.title)
                                     .font(.caption2)
                                     .foregroundStyle(viewModel.dateStringForegroundColor(for: day))
@@ -38,12 +33,12 @@ public struct CalendarView: View {
                                     .foregroundStyle(viewModel.dateStringForegroundColor(for: day))
                             }
                             .frame(
-                                width: size(from: proxy.size.width),
-                                height: size(from: proxy.size.width)
+                                width: viewModel.size(from: proxy.size.width),
+                                height: viewModel.size(from: proxy.size.width)
                             )
                             .background(content: {
                                 viewModel.backgroundColor(for: day)
-                                    .cornerRadius(size(from: proxy.size.width) / 2)
+                                    .cornerRadius(viewModel.size(from: proxy.size.width) / 2)
                             })
                             .onAppear {
                                 viewModel.dayAppeared(day)
@@ -64,13 +59,5 @@ public struct CalendarView: View {
                 .padding(.trailing, 2.0)
             }
         }
-    }
-
-    // MARK: - Private
-
-    private func size(from screenWidth: CGFloat) -> CGFloat {
-        let size = (screenWidth - (7 * ViewConstants.defaultSpacing)) / ViewConstants.numberOfElements
-        viewModel.setHeight(size + 40)
-        return size
     }
 }
