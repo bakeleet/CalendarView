@@ -9,7 +9,12 @@ import SwiftUI
 
 
 public final class CalendarViewModel: ObservableObject {
-    
+
+    public enum ViewConstants {
+        static let numberOfElements = 7.0
+        static let defaultSpacing = 4.0
+    }
+
     @Published private(set) var days = [
         CalendarDayModel(date: Date(), isSelected: true)
     ]
@@ -36,8 +41,10 @@ public final class CalendarViewModel: ObservableObject {
 
     func dayAppeared(_ day: CalendarDayModel) {
         loadMoreDaysIfNecessary(for: day)
+
         visibleDays.insert(day)
         setMonthText()
+
         delegate?.dayDidAppear(for: day.date)
     }
 
@@ -58,14 +65,10 @@ public final class CalendarViewModel: ObservableObject {
         delegate?.didTapDay(for: days[index].date)
     }
 
-    func setHeight(_ height: CGFloat) {
-        guard didSetHeightOnFirstLoad == false else {
-            return
-        }
-        didSetHeightOnFirstLoad = true
-        DispatchQueue.main.async {
-            self.delegate?.didSetInitialHeight(height)
-        }
+    func size(from screenWidth: CGFloat) -> CGFloat {
+        let size = (screenWidth - (7 * ViewConstants.defaultSpacing)) / ViewConstants.numberOfElements
+        setHeight(size + 40)
+        return size
     }
 
     func dateStringForegroundColor(for day: CalendarDayModel) -> Color {
@@ -89,6 +92,16 @@ public final class CalendarViewModel: ObservableObject {
     }
 
     // MARK: - Private
+
+    private func setHeight(_ height: CGFloat) {
+        guard didSetHeightOnFirstLoad == false else {
+            return
+        }
+        didSetHeightOnFirstLoad = true
+        DispatchQueue.main.async {
+            self.delegate?.didSetInitialHeight(height)
+        }
+    }
 
     private func loadMoreDaysIfNecessary(for dayModel: CalendarDayModel) {
         guard dayModel == days.last else { return }
